@@ -1,19 +1,26 @@
-BRANCH	 = main
-PACKAGE  = whois
-VERSION	 = `date "+%Y.%m%d%"`
-NEXT     = `autotag -b $(BRANCH) -n`
-RELEASE_DIR  = ..
+BRANCH	     = main
+PWD          = `pwd`
+PACKAGE      = `basename $(PWD)`
+REV          = `git rev-list --tags --max-count=1`
+VERSION      = `git describe --tags $(REV)`
+DATE	       = `date "+%Y.%m%d%"`
+NEXT         = `autotag -b $(BRANCH) -n`
+RELEASE_DIR  = ../dist
 RELEASE_FILE = $(PACKAGE)-$(VERSION)
 
 .SILENT: all
+.SILENT: docs
 .SILENT: release-next
 .SILENT: _patch
 .SILENT: _packages
 
-
 # Default target.
 all:
 	echo "Hello $(LOGNAME), nothing to do by default"
+
+docs:
+	mkdir -p docs
+	godoc-static -site-name="$(RELEASE_FILE)" -destination=./docs . 
 
 release:
 	autotag -b $(BRANCH)
@@ -25,9 +32,7 @@ release-next:
 release-build:
 	goreleaser release --snapshot --rm-dist
 
-release-notag:
-	goreleaser release
-
+.PHONY:release-all release docs
 
 _patch:
 	# fetch all tags and history:
@@ -39,3 +44,4 @@ _patch:
 	fi
 
 _packages:
+	go mod download
